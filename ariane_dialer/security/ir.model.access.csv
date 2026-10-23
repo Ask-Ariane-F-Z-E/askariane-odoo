@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_dialer_call_user,dialer call user,model_ariane_dialer_call,group_dialer_user,1,1,1,0
+access_dialer_call_manager,dialer call manager,model_ariane_dialer_call,group_dialer_manager,1,1,1,1
+access_dialer_segment_user,dialer segment user,model_ariane_dialer_call_segment,group_dialer_user,1,0,0,0
+access_dialer_segment_manager,dialer segment manager,model_ariane_dialer_call_segment,group_dialer_manager,1,0,0,1

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ariane_dialer.Systray">
+        <div t-if="state.enabled" class="o_ariane_dialer_systray o-dropdown dropdown">
+            <button class="btn btn-link d-flex align-items-center" title="Dialler" t-on-click="() => dialer.toggle()">
+                <i class="fa fa-phone fa-lg" t-att-class="{'text-success': state.mode === 'live', 'text-warning': state.mode === 'ringing' or state.mode === 'connecting'}"/>
+                <span t-if="state.mode !== 'idle'" class="o_ariane_dialer_dot ms-1"/>
+            </button>
+        </div>
+    </t>
+</templates>

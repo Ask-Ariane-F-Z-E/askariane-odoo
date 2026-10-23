@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dialer_call_list" model="ir.ui.view">
+        <field name="name">ariane.dialer.call.list</field>
+        <field name="model">ariane.dialer.call</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0">
+                <field name="started_at"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="partner_id"/>
+                <field name="phone"/>
+                <field name="direction"/>
+                <field name="duration"/>
+                <field name="disposition" optional="hide"/>
+                <field name="outcome_label" string="Outcome" decoration-success="disposition in ('interested', 'quote_sent')" decoration-danger="disposition == 'do_not_call'"/>
+                <field name="summary" optional="show"/>
+                <field name="transcript_state" optional="hide"/>
+                <field name="sale_order_id" optional="show"/>
+                <field name="state" optional="hide"/>
+                <field name="health_hangup_by" optional="hide" groups="ariane_dialer.group_dialer_manager"/>
+                <field name="health_mos_avg" optional="hide" groups="ariane_dialer.group_dialer_manager"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_dialer_call_form" model="ir.ui.view">
+        <field name="name">ariane.dialer.call.form</field>
+        <field name="model">ariane.dialer.call</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="user_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="lead_id" readonly="1"/>
+                            <field name="phone" readonly="1"/>
+                            <field name="direction" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="started_at" readonly="1"/>
+                            <field name="ended_at" readonly="1"/>
+                            <field name="duration" readonly="1"/>
+                            <field name="outcome_label" string="Outcome" readonly="1"/>
+                            <field name="disposition" readonly="1"/>
+                            <field name="follow_up_at" readonly="1"/>
+                            <field name="closure_reason" readonly="1" invisible="not closure_reason"/>
+                            <field name="sale_order_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notes"/>
+                    <notebook>
+                        <page name="transcript" string="Transcript" invisible="transcript_state == 'none'">
+                            <group>
+                                <field name="transcript_state" readonly="1"/>
+                                <field name="summary" readonly="1"/>
+                                <field name="next_action" readonly="1"/>
+                                <field name="language" readonly="1"/>
+                                <field name="transcript_purged_at" readonly="1" invisible="not transcript_purged_at"/>
+                            </group>
+                            <field name="segment_ids" readonly="1">
+                                <list>
+                                    <field name="start_s" string="At (s)"/>
+                                    <field name="speaker"/>
+                                    <field name="text"/>
+                                </list>
+                            </field>
+                            <field name="transcript" readonly="1" invisible="segment_ids"/>
+                        </page>
+                        <page name="call_health" string="Call health" groups="ariane_dialer.group_dialer_manager"
+                              invisible="not health_saved_at">
+                            <group>
+                                <group string="Line quality (Twilio)">
+                                    <div colspan="2" class="text-muted small">Edge round trip is the browser to Twilio's edge, not to the customer's phone. 0 = not measured.</div>
+                                    <field name="health_samples"/>
+                                    <label for="health_rtt_avg" string="Edge round trip (ms)"/>
+                                    <div invisible="not health_samples">min <field name="health_rtt_min" class="oe_inline"/> · avg <field name="health_rtt_avg" class="oe_inline"/> · p95 <field name="health_rtt_p95" class="oe_inline"/></div>
+                                    <label for="health_jitter_avg" string="Jitter (ms)"/>
+                                    <div invisible="not health_samples">min <field name="health_jitter_min" class="oe_inline"/> · avg <field name="health_jitter_avg" class="oe_inline"/> · p95 <field name="health_jitter_p95" class="oe_inline"/></div>
+                                    <label for="health_loss_avg" string="Packet loss (%)"/>
+                                    <div invisible="not health_samples">min <field name="health_loss_min" class="oe_inline"/> · avg <field name="health_loss_avg" class="oe_inline"/> · p95 <field name="health_loss_p95" class="oe_inline"/></div>
+                                    <label for="health_mos_avg" string="MOS (1-5)"/>
+                                    <div invisible="not health_samples">min <field name="health_mos_min" class="oe_inline"/> · avg <field name="health_mos_avg" class="oe_inline"/> · p95 <field name="health_mos_p95" class="oe_inline"/></div>
+                                    <field name="health_warning_count"/>
+                                </group>
+                                <group string="Connecting and ending">
+                                    <field name="health_authorize_ms"/>
+                                    <field name="health_connect_ms"/>
+                                    <field name="health_ringing_ms"/>
+                                    <field name="health_answer_ms"/>
+                                    <field name="health_hangup_by"/>
+                                    <field name="health_api_avg_ms"/>
+                                    <field name="health_api_p95_ms"/>
+                                    <field name="health_api_errors"/>
+                                    <field name="health_coach_avg_ms"/>
+                                    <field name="health_coach_p95_ms"/>
+                                    <field name="health_saved_at"/>
+                                </group>
+                            </group>
+                            <field name="health_timeline" readonly="1" invisible="not health_timeline"/>
+                            <div invisible="not health_timeline_purged_at" class="text-muted">
+                                Timeline removed on <field name="health_timeline_purged_at" class="oe_inline"/> (retention); the numbers above stay.
+                            </div>
+                            <div invisible="not health_events_dropped" class="text-muted small">
+                                <field name="health_events_dropped" class="oe_inline"/> events were left out (the timeline is capped).
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_dialer_call_search" model="ir.ui.view">
+        <field name="name">ariane.dialer.call.search</field>
+        <field name="model">ariane.dialer.call</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="phone"/>
+                <field name="user_id"/>
+                <filter name="mine" string="My calls" domain="[('user_id', '=', uid)]"/>
+                <filter name="today" string="Today" domain="[('started_at', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="g_rep" string="Rep" context="{'group_by': 'user_id'}"/>
+                <filter name="g_disp" string="Outcome" context="{'group_by': 'outcome_label'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_dialer_calls" model="ir.actions.act_window">
+        <field name="name">Calls</field>
+        <field name="res_model">ariane.dialer.call</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_today': 1}</field>
+    </record>
+    <record id="view_partner_form_dialer_calls" model="ir.ui.view">
+        <field name="name">res.partner.form.dialer.calls</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="ariane_calls" string="Calls" groups="ariane_dialer.group_dialer_user">
+                    <widget name="ariane_live_transcript"/>
+                    <field name="ariane_call_ids" readonly="1" context="{'form_view_ref': 'ariane_dialer.view_dialer_call_form'}">
+                        <list>
+                            <field name="started_at"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="partner_id" string="Contact"/>
+                            <field name="direction"/>
+                            <field name="duration"/>
+                            <field name="outcome_label" string="Outcome"/>
+                            <field name="summary"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <menuitem id="menu_dialer_calls" name="Dialler calls" parent="sale.sale_order_menu"
+              action="action_dialer_calls" sequence="90" groups="group_dialer_user"/>
+</odoo>

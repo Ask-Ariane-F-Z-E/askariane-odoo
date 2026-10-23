@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ariane_dialer.LiveTranscript">
+        <div t-if="isMine" class="o_ariane_live_transcript card mb-3 w-100">
+            <div class="o_ad_lt_head">
+                <t t-if="state.mode === 'wrapup' and state.callStatus !== 'ended' and (state.liveCoach or state.demoCallSid)">
+                    <i class="fa fa-circle-o-notch fa-spin"/><span>Call ended: writing the notes…</span>
+                </t>
+                <t t-elif="state.mode === 'wrapup'">
+                    <i class="fa fa-check text-success"/><span>Call ended</span>
+                </t>
+                <t t-else="">
+                    <span class="o_ad_lt_dot"/><span>Live call</span>
+                </t>
+                <span t-if="state.coachState === 'paused'" class="small text-warning">reconnecting…</span>
+                <span t-if="state.mode !== 'wrapup'" class="o_ad_lt_muted ms-auto">Saved to this contact when the call ends</span>
+            </div>
+            <div class="o_ad_lt_body">
+                <div class="o_ad_lt_chat">
+                    <div t-if="!state.transcript.length" class="small text-muted">
+                        <t t-if="state.liveCoach or state.demoCallSid">Waiting for the first words…</t>
+                        <t t-else="">This call is not being transcribed live.</t>
+                    </div>
+                    <div t-foreach="state.transcript" t-as="line" t-key="line.seq" class="o_ad_bubble_row"
+                         t-att-class="line.speaker === 'rep' ? 'o_ad_rep' : 'o_ad_cust'">
+                        <div class="o_ad_bubble_who" t-esc="line.speaker === 'rep' ? 'Rep' : 'Customer'"/>
+                        <div class="o_ad_bubble" t-esc="line.text"/>
+                    </div>
+                </div>
+                <div class="o_ad_lt_side">
+                    <t t-if="state.coach and state.coach.recommendations and state.coach.recommendations.length">
+                        <div class="o_ad_label">Recommended</div>
+                        <t t-foreach="state.coach.recommendations" t-as="r" t-key="r.product_id">
+                            <a t-if="state.shopLinks[r.product_id]" t-att-href="state.shopLinks[r.product_id]" target="_blank" rel="noopener noreferrer"
+                               class="o_ad_rec o_ariane_shop_link" t-att-title="r.why">
+                                <span class="flex-fill" t-esc="r.name or r.product_id"/>
+                                <span t-foreach="dialer.badges(r, state)" t-as="b" t-key="b.kind" class="o_ad_badge o_ad_badge_sm" t-att-class="'o_ad_badge_' + b.kind" t-esc="b.label"/>
+                                <i class="fa fa-external-link"/>
+                            </a>
+                            <span t-else="" class="o_ad_rec" t-att-title="r.why">
+                                <span class="flex-fill" t-esc="r.name or r.product_id"/>
+                                <span t-foreach="dialer.badges(r, state)" t-as="b" t-key="b.kind" class="o_ad_badge o_ad_badge_sm" t-att-class="'o_ad_badge_' + b.kind" t-esc="b.label"/>
+                            </span>
+                        </t>
+                    </t>
+                    <t t-if="state.coach and state.coach.notes and state.coach.notes.length">
+                        <div class="o_ad_label">Notes so far</div>
+                        <ul class="o_ad_notes"><li t-foreach="state.coach.notes" t-as="n" t-key="n_index" t-esc="n"/></ul>
+                    </t>
+                    <div t-if="!(state.coach and ((state.coach.recommendations and state.coach.recommendations.length) or (state.coach.notes and state.coach.notes.length)))" class="small text-muted">
+                        Products and notes appear here as the call goes.
+                    </div>
+                    <div t-if="state.savedToOdoo === true" class="small text-success">Saved to this contact's call transcripts.</div>
+                    <div t-if="state.savedToOdoo === false" class="small text-danger">Not saved to Odoo yet. The server keeps it for a retry.</div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

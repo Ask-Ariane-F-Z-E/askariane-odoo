@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_dialer_clearance" model="ir.ui.view">
+        <field name="name">product.template.form.dialer.clearance</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <group name="extra_info" position="after">
+                <group string="Dialler" name="ariane_dialer_clearance" groups="sales_team.group_sale_manager">
+                    <field name="dialer_clearance"/>
+                    <field name="dialer_clearance_until" invisible="not dialer_clearance"/>
+                </group>
+            </group>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_dialer_clearance" model="ir.ui.view">
+        <field name="name">product.template.search.dialer.clearance</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <filter name="combo" position="after">
+                <separator/>
+                <filter string="Clearance (dialler)" name="dialer_clearance"
+                        domain="[('dialer_clearance', '=', True)]" groups="sales_team.group_sale_manager"/>
+            </filter>
+        </field>
+    </record>
+</odoo>

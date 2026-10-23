@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="ariane_dialer.Panel">
+  <aside t-if="state.enabled and state.open" class="o_ariane_dialer_panel">
+    <header class="o_ad_head">
+      <div class="d-flex align-items-center gap-2">
+        <span class="o_ad_pill" t-att-class="'o_ad_pill_' + state.mode">
+          <span class="o_ad_pill_dot"/>
+          <t t-esc="{idle: 'Ready', connecting: 'Connecting', ringing: 'Ringing', live: 'On call', wrapup: 'Call ended'}[state.mode]"/>
+        </span>
+        <span t-if="elapsed" class="o_ad_mono o_ad_muted" t-esc="elapsed"/>
+        <span t-if="state.mode === 'live' and !state.preview and state.coachState === 'live'" class="o_ad_muted small">Coach listening</span>
+        <button class="o_ad_icon_btn ms-auto" title="Close" aria-label="Close" t-on-click="() => this.state.open = false"><i class="fa fa-times"/></button>
+      </div>
+
+      <div t-if="state.mode !== 'idle'" class="o_ad_who">
+        <span class="o_ad_avatar" t-esc="initials"/>
+        <div class="text-truncate">
+          <a t-if="state.info and state.info.partner" href="#" class="o_ad_who_name" t-on-click.prevent="openPartner" t-esc="state.info.partner.name"/>
+          <span t-else="" class="o_ad_who_name o_ad_mono" t-esc="state.phone"/>
+          <div class="o_ad_muted small text-truncate">
+            <t t-if="state.info and state.info.partner">
+              <t t-if="state.phone"><span class="o_ad_mono" t-esc="state.phone"/> · </t>
+              <t t-if="state.info.partner.state"><t t-esc="state.info.partner.state"/> · </t>
+              <t t-if="state.info.partner.tier"><t t-esc="state.info.partner.tier"/> tier · </t>
+              <t t-esc="state.info.partner.pricelist"/>
+            </t>
+            <t t-else="">No customer matched this number</t>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hang up shows from the moment the rep presses Call: a call still connecting can be stopped -->
+      <div t-if="state.mode === 'connecting' or state.mode === 'ringing' or state.mode === 'live'" class="o_ad_controls">
+        <button t-if="state.ringingIn" class="o_ad_ctl o_ad_ctl_go" t-on-click="() => dialer.answer()"><i class="fa fa-phone"/> Answer</button>
+        <button t-if="!state.preview and state.mode !== 'connecting'" class="o_ad_ctl" t-on-click="() => dialer.toggleMute()">
+          <i t-att-class="state.muted ? 'fa fa-microphone-slash' : 'fa fa-microphone'"/> <t t-esc="state.muted ? 'Unmute' : 'Mute'"/>
+        </button>
+        <button t-if="!state.preview and state.mode !== 'connecting'" class="o_ad_ctl" t-att-class="{'o_ad_ctl_on': ui.keypad}" t-on-click="() => this.ui.keypad = !this.ui.keypad"><i class="fa fa-th"/> Keypad</button>
+        <button class="o_ad_ctl o_ad_ctl_end" t-on-click="() => dialer.hangup()">
+          <i class="fa fa-phone fa-rotate-180"/> <t t-esc="state.preview ? 'Call ended' : 'Hang up'"/>
+        </button>
+      </div>
+    </header>
+
+    <div t-if="state.preview" class="o_ad_banner">
+      Preview mode: calling is not connected yet. Dial on your usual phone and use this panel for the customer, products and the log.
+    </div>
+    <div t-if="state.error" class="o_ad_banner o_ad_banner_warn" t-esc="state.error"/>
+    <div t-if="state.blocked" class="o_ad_banner o_ad_banner_bad" t-esc="state.blocked"/>
+    <div t-if="state.mode === 'live' and !state.preview and state.coachState !== 'live'" class="o_ad_banner">
+      <t t-if="state.coachState === 'degraded'">Coach off: hearing one side only. Your call is fine.</t>
+      <t t-else="">Coach paused. Your call is fine.</t>
+    </div>
+
+    <!-- call health: during the call and through wrap-up (call_health.js) -->
+    <section t-if="healthShown" class="o_ad_health o_ariane_health" t-att-class="'o_ad_health_' + state.health.dot">
+      <div class="d-flex align-items-center gap-2">
+        <button class="o_ad_link o_ad_health_toggle flex-fill text-start" t-att-aria-expanded="ui.healthOpen ? 'true' : 'false'"
+                t-on-click="() => this.ui.healthOpen = !this.ui.healthOpen">
+          <span class="o_ad_health_dot" t-att-class="'o_ad_health_dot_' + state.health.dot" t-att-title="'Line quality: ' + state.health.dot"/>
+          Call health
+          <span class="o_ad_muted small">
+            <t t-if="state.health.rtt !== null">Twilio edge round trip <t t-esc="ms(state.health.rtt)"/></t>
+            <t t-if="state.health.apiMs !== null"> · API connection <t t-esc="ms(state.health.apiMs)"/></t>
+          </span>
+          <i t-att-class="ui.healthOpen ? 'fa fa-caret-up' : 'fa fa-caret-down'"/>
+        </button>
+        <button t-if="healthHideable" class="o_ad_icon_btn o_ad_health_hide" title="Hide call health" aria-label="Hide call health"
+                t-on-click="() => this.setHealthHidden(true)"><i class="fa fa-eye-slash"/></button>
+      </div>
+      <div t-if="ui.healthOpen" class="o_ad_health_body small">
+        <div class="o_ad_health_grid">
+          <span>Twilio edge round trip</span><span class="o_ad_mono" t-esc="ms(state.health.rtt)"/>
+          <span>Jitter</span><span class="o_ad_mono" t-esc="ms(state.health.jitter)"/>
+          <span>Packet loss</span><span class="o_ad_mono" t-esc="pct(state.health.loss)"/>
+          <span>MOS (1-5)</span><span class="o_ad_mono" t-esc="state.health.mos === null ? '–' : state.health.mos.toFixed(2)"/>
+          <span>API connection</span><span class="o_ad_mono"><t t-esc="ms(state.health.apiMs)"/><t t-if="state.health.apiErrors"> · <t t-esc="state.health.apiErrors"/> failed</t></span>
+          <span>Coach answer time</span><span class="o_ad_mono" t-esc="ms(state.health.coachMs)"/>
+          <span>Coach stream</span><span t-esc="state.health.coachState"/>
+          <span>Click → authorised</span><span class="o_ad_mono" t-esc="ms(state.health.timings.authorize)"/>
+          <span>Authorised → connected</span><span class="o_ad_mono" t-esc="ms(state.health.timings.connect)"/>
+          <span>Connected → ringing</span><span class="o_ad_mono" t-esc="ms(state.health.timings.ringing)"/>
+          <span>Ringing → answered</span><span class="o_ad_mono" t-esc="ms(state.health.timings.answer)"/>
+        </div>
+        <div class="o_ad_fine">Round trip is from this browser to Twilio's edge, not to the customer's phone.</div>
+        <div t-if="state.health.warnings.length" class="o_ad_warn">Warnings: <t t-esc="state.health.warnings.join(', ')"/></div>
+        <div t-if="state.health.hangupBy" class="o_ad_health_hangup" t-esc="hangupText(state.health.hangupBy)"/>
+        <ol class="o_ad_health_events">
+          <li t-foreach="state.health.events" t-as="e" t-key="e_index">
+            <span class="o_ad_mono" t-esc="eventAt(e)"/> <t t-esc="e.ev"/><t t-if="e.code"> (<t t-esc="e.code"/>)</t><t t-if="e.detail"> <span class="o_ad_muted" t-esc="e.detail"/></t>
+          </li>
+        </ol>
+      </div>
+    </section>
+    <button t-elif="state.health and state.mode !== 'idle'" class="o_ad_link small o_ad_health_show" t-on-click="() => this.setHealthHidden(false)">
+      <span class="o_ad_health_dot" t-att-class="'o_ad_health_dot_' + state.health.dot"/> Show call health
+    </button>
+
+    <div class="o_ariane_dialer_body">
+      <!-- dial pad -->
+      <section t-if="state.mode === 'idle'" class="o_ad_stack">
+        <label class="o_ad_label" for="o_ariane_dial">Number to call</label>
+        <div class="d-flex gap-2">
+          <input id="o_ariane_dial" class="o_ad_input o_ad_mono flex-fill" type="tel" placeholder="Number to call" t-model="ui.dial" t-on-keydown="(ev) => ev.key === 'Enter' and this.dial()"/>
+          <button class="o_ad_btn o_ad_btn_go" t-on-click="dial"><i class="fa fa-phone"/> Call</button>
+        </div>
+        <div class="o_ad_hint"><i class="fa fa-headphones"/> Or press the headset next to any phone number in Odoo.</div>
+        <div t-if="!state.preview and state.demoAllowed" class="form-check form-switch small">
+          <input class="form-check-input" type="checkbox" id="o_ariane_demo" t-model="state.demoMode"/>
+          <label class="form-check-label" for="o_ariane_demo">AI rep calls instead of me (test numbers only)</label>
+        </div>
+      </section>
+
+      <!-- power dialler: the rep's own calls due now -->
+      <section t-if="state.mode === 'idle'" class="o_ad_stack o_ariane_queue">
+        <div class="d-flex align-items-center gap-2">
+          <div class="o_ad_label">Today's calls</div>
+          <span t-if="queueLeft.length" class="o_ad_count" t-esc="queueLeft.length"/>
+          <button class="o_ad_icon_btn ms-auto" title="Refresh" aria-label="Refresh the list" t-on-click="() => dialer.loadQueue()">
+            <i class="fa fa-refresh" t-att-class="{'fa-spin': state.queueLoading}"/>
+          </button>
+        </div>
+        <button t-if="next" class="o_ad_btn o_ad_btn_go w-100 o_ariane_call_next" t-on-click="callNext">
+          <i class="fa fa-phone"/> Call next: <t t-esc="next.name"/>
+        </button>
+        <div t-if="!queueLeft.length and !state.queueLoading" class="o_ad_muted small">Nothing due. Calls you schedule show up here.</div>
+        <div t-foreach="queueLeft" t-as="item" t-key="item.key" class="o_ad_queue_row" t-att-class="{'o_ad_queue_next': next and next.key === item.key}">
+          <div class="flex-fill text-truncate">
+            <div class="fw-semibold text-truncate" t-esc="item.name"/>
+            <div class="o_ad_muted small text-truncate">
+              <span t-if="item.overdue" class="o_ad_bad">Overdue · </span><t t-esc="dueText(item)"/><t t-if="item.reason"> · <t t-esc="item.reason"/></t>
+            </div>
+          </div>
+          <button class="o_ad_btn o_ad_btn_soft o_ad_btn_sm" title="Skip for now" t-on-click="() => dialer.skip(item)">Skip</button>
+          <button class="o_ad_btn o_ad_btn_dark o_ad_btn_sm" t-att-disabled="!item.phone" t-att-title="item.phone ? 'Call ' + item.phone : 'No phone number'"
+                  t-on-click="() => dialer.callFromQueue(item)"><i class="fa fa-phone"/></button>
+        </div>
+        <button t-if="state.skipped.length" class="o_ad_link small" t-on-click="() => this.state.skipped = []">Show <t t-esc="state.skipped.length"/> skipped</button>
+      </section>
+
+      <section t-if="ui.keypad and state.mode === 'live'" class="o_ariane_keypad">
+        <t t-foreach="['1','2','3','4','5','6','7','8','9','*','0','#']" t-as="d" t-key="d">
+          <button class="o_ad_key" t-on-click="() => this.key(d)" t-esc="d"/>
+        </t>
+      </section>
+
+      <!-- live coach: what to say, what to sell, what was said -->
+      <t t-if="state.coach or state.transcript.length or fillerShown">
+        <div t-if="state.demoCallSid and state.mode === 'ringing'" class="o_ad_hint">Ringing <t t-esc="state.phone"/>… answer it and talk to the AI rep.</div>
+        <!-- Say next: a filler while the coach or a search works; the coach's line is hidden meanwhile, never deleted -->
+        <section t-if="fillerShown" class="o_ariane_say o_ad_card o_ad_card_say o_ad_say_filler" aria-live="polite">
+          <div class="o_ad_label o_ad_label_say"><i class="fa fa-circle-o-notch fa-spin"/> While I check…</div>
+          <div class="o_ad_say_text" t-esc="state.filler"/>
+        </section>
+        <section t-elif="state.coach and state.coach.say_next" class="o_ariane_say o_ad_card o_ad_card_say">
+          <div class="o_ad_label o_ad_label_say"><i class="fa fa-commenting"/> Say next</div>
+          <div class="o_ad_say_text" t-esc="state.coach.say_next"/>
+        </section>
+        <t t-if="state.coach">
+          <section t-if="state.coach.ask_next" class="o_ad_card o_ad_card_ask">
+            <span class="o_ad_ask_icon">?</span>
+            <div>
+              <div class="o_ad_label o_ad_label_ask">Ask next</div>
+              <div class="fw-semibold" t-esc="state.coach.ask_next"/>
+            </div>
+          </section>
+          <section t-if="state.coach.flags and state.coach.flags.length" class="o_ad_flags">
+            <div t-foreach="state.coach.flags" t-as="f" t-key="f_index"><i class="fa fa-exclamation-triangle"/> <t t-esc="f"/></div>
+          </section>
+          <section t-if="state.coach.recommendations and state.coach.recommendations.length" class="o_ad_stack">
+            <div class="o_ad_label">Recommended for this customer</div>
+            <div t-foreach="state.coach.recommendations" t-as="r" t-key="r.product_id" class="o_ariane_product o_ad_card o_ad_prod o_ad_prod_rec"
+                 t-att-class="{'o_ad_prod_clearance': hasClearance(r)}">
+              <div class="d-flex gap-2 align-items-baseline">
+                <a href="#" class="o_ad_prod_name flex-fill" t-on-click.prevent="() => dialer.openProduct(r.product_id)" t-esc="r.name"/>
+                <span class="o_ad_mono fw-semibold" t-esc="money(r.price, r.currency)"/>
+              </div>
+              <div t-if="badges(r).length" class="o_ad_badges">
+                <span t-foreach="badges(r)" t-as="b" t-key="b.kind" class="o_ad_badge" t-att-class="'o_ad_badge_' + b.kind" t-esc="b.label"/>
+              </div>
+              <div class="o_ad_muted small"><t t-esc="r.code"/><t t-if="state.info and state.info.partner and state.info.partner.tier"> · <t t-esc="state.info.partner.tier"/> price</t><t t-if="r.stock !== null and r.stock !== undefined"> · <t t-esc="r.stock"/> free</t></div>
+              <div t-if="r.why" class="o_ad_why" t-esc="r.why"/>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span t-if="r.availability" class="o_ad_tag" t-esc="r.availability"/>
+                <a t-if="state.shopLinks[r.product_id]" t-att-href="state.shopLinks[r.product_id]" target="_blank" rel="noopener noreferrer"
+                   class="o_ariane_shop_link o_ad_link" title="Open on the website">Website <i class="fa fa-external-link"/></a>
+                <button class="o_ad_btn o_ad_btn_dark o_ad_btn_sm ms-auto" t-att-disabled="!state.partnerId or ui.adding" t-on-click="() => this.addRec(r)">Add to quote</button>
+              </div>
+            </div>
+          </section>
+        </t>
+        <section t-if="state.transcript.length" class="o_ad_stack">
+          <div class="o_ad_label">Conversation</div>
+          <!-- column-reverse keeps the newest line in view; the inner div keeps reading order -->
+          <div class="o_ariane_transcript"><div>
+            <div t-foreach="state.transcript" t-as="line" t-key="line.seq" class="o_ad_bubble_row" t-att-class="line.speaker === 'rep' ? 'o_ad_rep' : 'o_ad_cust'">
+              <div class="o_ad_bubble_who" t-esc="speaker(line)"/>
+              <div class="o_ad_bubble" t-esc="line.text"/>
+            </div>
+          </div></div>
+        </section>
+        <section t-if="state.coach and state.coach.notes and state.coach.notes.length" class="o_ad_stack">
+          <div class="o_ad_label">Notes so far</div>
+          <ul class="o_ad_notes"><li t-foreach="state.coach.notes" t-as="n" t-key="n_index" t-esc="n"/></ul>
+        </section>
+        <section t-if="state.coach and state.coach.summary" class="o_ad_card o_ad_card_say">
+          <div class="o_ad_label o_ad_label_say">AI summary</div>
+          <div t-esc="state.coach.summary"/>
+          <div t-if="state.coach.next_action" class="o_ad_next"><strong>Next</strong> <t t-esc="state.coach.next_action"/></div>
+        </section>
+        <div t-if="state.savedToOdoo === true" class="o_ad_saved"><i class="fa fa-check"/> Transcript saved to the contact's Calls tab.</div>
+        <div t-if="state.savedToOdoo === false" class="o_ad_banner o_ad_banner_bad">The transcript was not saved to Odoo yet. It is kept on the server for a retry.</div>
+      </t>
+
+      <!-- live coach cards -->
+      <section t-if="state.cards.length" class="o_ad_stack">
+        <t t-foreach="state.cards" t-as="card" t-key="card.id">
+          <div class="o_ariane_card o_ad_card" t-att-class="{'o_ad_card_bad': card.kind === 'compliance', 'opacity-75': !card_first}">
+            <div class="o_ad_label" t-esc="card.title"/>
+            <div class="fw-semibold" t-esc="card.body"/>
+            <div t-if="card.source" class="o_ad_muted small" t-esc="card.source"/>
+          </div>
+        </t>
+      </section>
+
+      <!-- names the customer said: Odoo's own search for each, with this customer's prices -->
+      <section t-if="state.mode !== 'idle' and state.mentions.length" class="o_ad_stack o_ariane_mentions">
+        <div t-foreach="state.mentions" t-as="m" t-key="m.id" class="o_ad_card o_ad_stack">
+          <div class="o_ad_label"><i class="fa fa-comment-o"/> <t t-if="m.speaker === 'rep'">Rep said</t><t t-else="">Customer mentioned</t>: <t t-esc="m.term"/></div>
+          <div t-if="m.status === 'loading'" class="o_ad_muted small">Looking it up…</div>
+          <div t-elif="m.status === 'error'" class="o_ad_muted small">Could not look it up. Search it below.</div>
+          <div t-elif="m.status === 'none'" class="o_ad_muted small">No match for '<t t-esc="m.term"/>' that this customer can buy.</div>
+          <div t-foreach="m.products" t-as="c" t-key="c.id" class="o_ariane_product o_ad_prod">
+            <div class="d-flex gap-2 align-items-baseline">
+              <a href="#" class="o_ad_prod_name flex-fill" t-on-click.prevent="() => dialer.openProduct(c.id)" t-esc="c.name"/>
+              <span t-if="c.price !== null" class="o_ad_mono fw-semibold" t-esc="money(c.price, c.currency)"/>
+              <span t-else="" class="o_ad_warn small" t-esc="c.priceLabel"/>
+            </div>
+            <div t-if="c.ships" class="small o_ad_muted" t-esc="c.ships"/>
+            <div t-if="c.compliance" class="small o_ad_warn"><i class="fa fa-exclamation-triangle"/> <t t-esc="c.compliance"/></div>
+          </div>
+          <div t-if="m.hidden" class="o_ad_muted small"><t t-esc="m.hidden"/> more not shown: this customer cannot buy them.</div>
+        </div>
+      </section>
+
+      <!-- customer -->
+      <section t-if="state.mode !== 'idle' and state.info and state.info.partner" class="o_ad_card o_ad_stack">
+        <div class="o_ad_label">Customer</div>
+        <div class="o_ad_muted small">
+          <t t-if="state.info.partner.salesperson">Owner <t t-esc="state.info.partner.salesperson"/></t>
+          <t t-if="state.info.partner.ship_state and state.info.partner.ship_state !== state.info.partner.state"> · ships to <t t-esc="state.info.partner.ship_state"/></t>
+        </div>
+        <div t-foreach="state.info.partner.warnings" t-as="w" t-key="w_index" class="o_ad_warn small"><i class="fa fa-exclamation-triangle"/> <t t-esc="w"/></div>
+        <div t-if="state.info.partner.total_due" class="o_ad_bad small fw-semibold">Owes <t t-esc="money(state.info.partner.total_due)"/></div>
+        <ul t-if="state.info.orders.length" class="o_ad_rows">
+          <li t-foreach="state.info.orders" t-as="o" t-key="o.id"><span class="o_ad_muted" t-esc="o.date"/> <span t-esc="o.name"/> <span class="o_ad_mono ms-auto" t-esc="money(o.amount, o.currency)"/></li>
+        </ul>
+        <div t-else="" class="o_ad_muted small">No confirmed orders yet.</div>
+        <div t-if="state.info.open_quotes.length" class="small">Open quotes:
+          <t t-foreach="state.info.open_quotes" t-as="q" t-key="q.id"><t t-esc="q.name"/> (<t t-esc="money(q.amount)"/>) </t>
+        </div>
+        <div t-if="state.info.activities.length" class="small">To do:
+          <t t-foreach="state.info.activities" t-as="a" t-key="a_index"><t t-esc="a.summary"/> (<t t-esc="a.due"/>) </t>
+        </div>
+      </section>
+
+      <!-- what sells in the customer's state (live coach calls only) -->
+      <section t-if="state.mode !== 'idle' and state.hot" class="o_ad_card o_ad_stack o_ariane_hot">
+        <t t-if="state.hot.status === 'ok'">
+          <div class="o_ad_label"><i class="fa fa-line-chart"/> Selling in <t t-esc="state.hot.state"/><t t-if="state.hot.days"> · last <t t-esc="state.hot.days"/> days</t></div>
+          <div t-foreach="state.hot.items" t-as="h" t-key="h.id" class="o_ad_hot_row">
+            <span class="o_ad_hot_rank o_ad_mono">#<t t-esc="h.rank"/></span>
+            <a href="#" class="o_ad_hot_name o_ad_prod_name flex-fill text-truncate" t-on-click.prevent="() => dialer.openProduct(h.id)" t-esc="h.name"/>
+            <span t-foreach="badges(h)" t-as="b" t-key="b.kind" class="o_ad_badge o_ad_badge_sm" t-att-class="'o_ad_badge_' + b.kind" t-esc="b.label"/>
+            <span t-if="h.price !== null" class="o_ad_mono small" t-esc="money(h.price, h.currency)"/>
+          </div>
+        </t>
+        <div t-else="" class="o_ad_muted small">Not enough sales in <t t-esc="state.hot.state"/> <t t-if="state.hot.days">in the last <t t-esc="state.hot.days"/> days</t><t t-else="">lately</t> to rank.</div>
+      </section>
+
+      <!-- catalogue -->
+      <section t-if="state.mode !== 'idle'" class="o_ad_stack">
+        <div class="o_ad_label">Products</div>
+        <div class="o_ad_search">
+          <i class="fa fa-search"/>
+          <input class="o_ad_input" placeholder="Search name or code" t-att-value="state.query" t-on-input="onSearch"/>
+        </div>
+        <div t-if="state.searching" class="o_ad_muted small">Searching…</div>
+        <div t-if="state.hidden" class="o_ad_muted small"><t t-esc="state.hidden"/> more not shown: this customer cannot buy them.</div>
+        <t t-foreach="state.results" t-as="p" t-key="p.id">
+          <div class="o_ariane_product o_ad_card o_ad_prod">
+            <div class="d-flex gap-2 align-items-baseline">
+              <a href="#" class="o_ad_prod_name flex-fill" t-on-click.prevent="() => dialer.openProduct(p.id)" t-esc="p.name"/>
+              <span t-if="p.price !== null" class="o_ad_mono fw-semibold" t-esc="money(p.price, p.currency)"/>
+            </div>
+            <div class="small">
+              <span t-if="p.price !== null" class="o_ad_muted"><t t-esc="p.pricelist"/><t t-if="p.price_note"> · <t t-esc="p.price_note"/></t></span>
+              <span t-else="" class="o_ad_warn" t-esc="p.price_note"/>
+            </div>
+            <div t-if="p.breaks and p.breaks.length" class="o_ad_muted small">
+              <t t-foreach="p.breaks" t-as="b" t-key="b_index"><t t-esc="b.min_qty"/>+ → <t t-esc="money(b.price)"/>  </t>
+            </div>
+            <div t-if="p.stock and p.stock.note" class="small o_ad_muted" t-esc="p.stock.note"/>
+            <div t-elif="p.stock" class="small" t-att-class="p.stock.free > 0 ? 'o_ad_good' : 'o_ad_bad'">
+              <t t-esc="p.stock.free"/> <t t-esc="p.stock.uom"/> free (<t t-esc="p.stock.on_hand"/> on hand)
+            </div>
+            <div t-if="p.last_purchase" class="o_ad_muted small">Last bought <t t-esc="p.last_purchase.date"/>: <t t-esc="p.last_purchase.qty"/> @ <t t-esc="money(p.last_purchase.price_unit)"/></div>
+            <div t-if="p.moq and p.moq > 1" class="small">Minimum order <t t-esc="p.moq"/></div>
+            <div t-if="p.compliance and p.compliance.status !== 'allowed'" class="small" t-att-class="quotable(p) ? 'o_ad_warn' : 'o_ad_bad'"><i class="fa fa-exclamation-triangle"/> <t t-esc="p.compliance.text"/></div>
+            <div class="o_ad_fine">Checked <t t-esc="p.checked_at"/> UTC · prices are indicative; Odoo re-prices on the quote</div>
+            <div class="d-flex gap-2 mt-1">
+              <input type="number" t-att-min="p.moq || 1" class="o_ad_input o_ad_qty" t-att-value="qty(p)" t-on-change="(ev) => this.onQty(p, ev)"/>
+              <button class="o_ad_btn o_ad_btn_dark o_ad_btn_sm" t-att-disabled="!state.partnerId or !quotable(p) or ui.adding" t-on-click="() => this.add(p)">Add to quote</button>
+            </div>
+            <t t-if="p.links">
+              <div t-if="p.links.goes_with and p.links.goes_with.length" class="small mt-2"><strong>Goes with:</strong>
+                <t t-foreach="p.links.goes_with" t-as="l" t-key="l_index">
+                  <div><a href="#" t-on-click.prevent="() => dialer.openProduct(l.id)" t-esc="l.name"/> <t t-if="l.price !== null">· <t t-esc="money(l.price)"/></t></div>
+                </t>
+              </div>
+              <div t-if="p.links.instead_of and p.links.instead_of.length" class="small mt-1"><strong>Instead of (if out of stock or too dear):</strong>
+                <t t-foreach="p.links.instead_of" t-as="l" t-key="l_index">
+                  <div><a href="#" t-on-click.prevent="() => dialer.openProduct(l.id)" t-esc="l.name"/> <t t-if="l.price !== null">· <t t-esc="money(l.price)"/></t></div>
+                </t>
+              </div>
+            </t>
+          </div>
+        </t>
+        <div t-if="state.quote" class="small">Quote <a href="#" t-on-click.prevent="openQuote" t-esc="state.quote.order_name"/>: <span class="o_ad_mono" t-esc="money(state.quote.order_total, state.quote.currency)"/></div>
+      </section>
+
+      <!-- wrap-up -->
+      <section t-if="state.mode === 'wrapup'" class="o_ad_stack">
+        <div class="o_ad_label">Outcome</div>
+        <div t-if="state.info and state.info.open_request" class="o_ad_muted small">
+          This completes: <t t-esc="state.info.open_request.summary"/> (due <t t-esc="state.info.open_request.due"/>)
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <t t-foreach="state.outcomes" t-as="o" t-key="o.code">
+            <button class="o_ad_chip" t-att-class="{'o_ad_chip_on': ui.outcome === o.code}" t-on-click="() => this.ui.outcome = o.code" t-esc="o.label"/>
+          </t>
+        </div>
+        <div class="d-flex align-items-center mt-2">
+          <label class="o_ad_label" for="o_ariane_note">Notes</label>
+          <button t-if="state.coach" class="o_ad_btn o_ad_btn_soft o_ad_btn_sm ms-auto" t-on-click="useAiNotes"><i class="fa fa-magic"/> Use the AI notes</button>
+        </div>
+        <textarea id="o_ariane_note" class="o_ad_input" rows="4" placeholder="What happened on the call? (needed)" t-model="ui.note"/>
+        <div t-if="!noteOk" class="o_ad_hint o_ad_warn small">Write a note to finish</div>
+        <label t-if="!outcome or !outcome.closes" class="o_ad_field">Follow up at<t t-if="outcome and outcome.needs_followup"> (needed)</t>
+          <input type="datetime-local" class="o_ad_input" t-model="ui.followUp"/>
+        </label>
+        <label t-if="outcome and outcome.closes" class="o_ad_field">Why is this closed?<t t-if="outcome.needs_closure_reason"> (needed)</t>
+          <input type="text" maxlength="500" class="o_ad_input" t-model="ui.closureReason"/>
+        </label>
+      </section>
+    </div>
+
+    <footer t-if="state.mode === 'wrapup'" class="o_ad_foot">
+      <div class="d-flex gap-2">
+        <button t-if="next" class="o_ad_btn o_ad_btn_soft" t-att-disabled="!canSave" t-on-click="save">Save</button>
+        <button t-if="next" class="o_ad_btn o_ad_btn_go flex-fill text-truncate o_ariane_save_next" t-att-disabled="!canSave" t-on-click="saveAndNext">
+          Save and call <t t-esc="next.name"/>
+        </button>
+        <button t-if="!next" class="o_ad_btn o_ad_btn_go flex-fill" t-att-disabled="!canSave" t-on-click="save">Save and finish</button>
+      </div>
+    </footer>
+  </aside>
+</t>
+</templates>

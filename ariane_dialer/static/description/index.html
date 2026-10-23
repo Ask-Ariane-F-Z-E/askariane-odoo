@@ -1,0 +1,170 @@
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="text-center">
+            <img src="icon.png" alt="Ariane Dialer" style="width:96px;height:96px;border-radius:16px;"/>
+            <h2 class="oe_slogan" style="color:#0F766E;">Ariane Dialer</h2>
+            <h3 class="oe_slogan">Call from the contact. See the words live. Get the next product to pitch.</h3>
+            <p class="lead">
+                A click-to-call softphone inside Odoo with a live transcript and a live sales coach
+                that suggests products from your own catalogue, at your own prices.
+            </p>
+            <p style="font-size:16px;">
+                <b>This app is free.</b> Calls go through <b>your own Twilio account</b>.
+                Live calling and the AI coach need an Ask Ariane account.
+            </p>
+            <p style="margin-top:16px;">
+                <a href="https://askariane.ai/book?src=odoo-store" target="_blank" rel="noopener noreferrer"
+                   style="display:inline-block;padding:12px 28px;background:#0F766E;color:#ffffff;border-radius:8px;font-size:18px;font-weight:bold;text-decoration:none;">
+                    Connect to Ask Ariane
+                </a>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="text-center">
+            <img src="cover_screenshot.png" class="img img-fluid shadow" alt="The dialler panel on a contact, with product search"/>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="text-center">What it does</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Call from the contact</h4>
+                <p>A Dialler button sits next to every phone field. One click opens a side panel for that
+                    customer: owner, pricelist, amount due, last orders, open quotes and to-dos.</p>
+                <h4>Live transcript</h4>
+                <p>The conversation is written out line by line while the call runs, and kept on the
+                    call record and the contact's Calls tab afterwards.</p>
+                <h4>Live coach card</h4>
+                <p>While the customer talks, a coach card suggests products from your own catalogue,
+                    priced by your own pricelists and price rules, with free stock and quantity breaks.
+                    Prices you mark as "do not quote" never show.</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Badges that help the pitch</h4>
+                <ul>
+                    <li><b>New seller</b> - products that started selling recently.</li>
+                    <li><b>Clearance</b> - products a sales manager flagged to move, with an optional end date.</li>
+                    <li><b>Selling in your state</b> - top sellers to shops in the customer's delivery state.</li>
+                </ul>
+                <h4>Filler lines</h4>
+                <p>Short, safe lines the rep can say while the coach is thinking. You set them in Settings.</p>
+                <h4>Wrap-up</h4>
+                <p>Pick an outcome, write a note, set a call-back date. Odoo logs the call, adds a note
+                    to the customer or lead, and creates the call-back activity. "Do not call" can add the
+                    number to Odoo's phone blacklist.</p>
+                <h4>Calling from a list</h4>
+                <p>The idle panel shows today's calls. Call next, skip, or save and call the next one.
+                    Nothing dials without a click.</p>
+                <h4>Incoming calls</h4>
+                <p>Calls to your Twilio number can be answered in the panel, with the same customer card.</p>
+                <h4>AI rep test call (off by default)</h4>
+                <p>For trying the coach without a customer: an AI voice agent places a test call to a
+                    number you choose, and you play the customer. Nobody has it after install; an admin
+                    turns it on per user with the <b>AI rep demo calls</b> group (Settings &gt; Users,
+                    developer mode). It then shows as a switch in the panel and a button next to phone fields.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Who it is for</h3>
+                <p>B2B sales teams that sell by phone from Odoo, on Odoo.sh or self-hosted. Reps see the
+                    customer and the right products in one place, and managers see every call.</p>
+            </div>
+            <div class="col-md-6">
+                <h3>Requirements</h3>
+                <ul>
+                    <li>Odoo 18 (Community or Enterprise) with Sales, Inventory and CRM.</li>
+                    <li><b>Your own phone account.</b> Bring your own Twilio account and numbers.
+                        Ask Ariane does not sell phone lines or numbers; your calls are carried and billed by
+                        your phone provider.</li>
+                    <li><b>An Ask Ariane account</b> for live calling, the live transcript and the coach.
+                        It is a paid monthly service, billed by Ask Ariane, not through the Odoo Apps Store.</li>
+                    <li>Without an Ask Ariane account the panel runs in <b>preview mode</b>: the rep dials on
+                        their usual phone and uses the panel for the customer, products, quotes and the call log.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="alert alert-info" role="alert">
+            <h3>What leaves your Odoo</h3>
+            <p><b>Nothing is sent anywhere until an admin enters the dialler service URL, tenant id and
+                signing key</b> in Settings &gt; Sales &gt; Dialler. Until then the panel runs in preview mode
+                and every lookup, search, quote and call log stays inside your Odoo.</p>
+            <p>Once connected, the browser of a user with the Dialler access right sends this to the
+                Ask Ariane dialler service. <b>This includes personal data about your customers: the
+                customer's name and the phone number dialled.</b></p>
+            <ul>
+                <li><b>Sign-in pass</b> (when Odoo opens, refreshed while it stays open) - your database uuid,
+                    your tenant id, the Odoo user id and the user's company ids, signed with your key.</li>
+                <li><b>Each call placed</b> - the number dialled (personal data), the contact's id and the Odoo call record's id.</li>
+                <li><b>Coach context for the call</b> - sent when the live coach is on for the call, and on every
+                    AI rep test call. It holds: the phone number (personal data), the Odoo call id, the contact's
+                    (partner) id, the company id and the Odoo user id; the customer's name (personal data), delivery
+                    state, customer tier and pricelist name; up to 60 products that may be offered to that customer,
+                    each with name, internal reference, price and currency for that customer, free stock,
+                    availability text, category, brand, shipping note, badges, a "featured" flag and, for
+                    "selling in your state" products, their rank and the state they were ranked in; and the
+                    catalogue names the coach listens for (vendor, brand and category names only).</li>
+                <li><b>AI rep test call</b> (only for users an admin gave the group) - the number to call,
+                    the contact's id, the Odoo call id and the coach context above, sent to the service's
+                    test-call route (<code>/v1/dialer/demo-call</code>); the service's AI voice agent then places the call.</li>
+                <li><b>Call audio</b> - carried by your own Twilio account through the in-browser softphone
+                    (the Twilio Voice SDK, shipped inside the module). On calls the live coach is on for, and on
+                    AI rep test calls, the service transcribes the call to give the coach its words.</li>
+                <li><b>Twilio's own reporting</b> - the Twilio Voice SDK, as Twilio ships it, reports call-quality
+                    data (connection and audio statistics) to Twilio's servers. This module keeps that default.</li>
+            </ul>
+            <p>What comes back: the service posts each call's transcript and AI summary to this module's own
+                signed route, and they are stored on the call record in your Odoo. Call recording is off unless
+                it is switched on for your Ask Ariane account. When it is on, the service keeps the audio
+                encrypted in its own store (365 days unless your account sets another period) and deletes the
+                copy at Twilio; your Odoo receives only a recording reference id, never the audio. The panel
+                measures call-health timings in the browser and stores them in your Odoo; it does not send
+                them to the Ask Ariane service.</p>
+            <p>Not sent: product searches typed in the panel, quotes, wrap-up notes, outcomes and the
+                rest of your database stay in Odoo. Answering an incoming call sends nothing extra from Odoo.</p>
+            <p>Privacy policy: <a href="https://askariane.ai/privacy" target="_blank" rel="noopener noreferrer">https://askariane.ai/privacy</a></p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="text-center">Set up in five steps</h3>
+        <ol>
+            <li>Install the app.</li>
+            <li>Give your reps the <b>Dialler / User</b> access right, and managers <b>Dialler / Manager</b>.</li>
+            <li>Open an Ask Ariane account with the <b>Connect to Ask Ariane</b> button (here or in
+                Settings &gt; Sales &gt; Dialler) and link your own Twilio account there.</li>
+            <li>In Settings &gt; Sales &gt; Dialler, paste the service URL, tenant id and signing key from Ask Ariane.</li>
+            <li>Open a contact and click the Dialler button next to the phone number. Logged calls are
+                under Sales &gt; Orders &gt; Dialler calls.</li>
+        </ol>
+        <div class="text-center">
+            <img src="screenshot_calls.png" class="img img-fluid shadow" alt="Every call logged with outcome and summary"/>
+        </div>
+        <p class="text-center" style="margin-top:24px;">
+            <a href="https://askariane.ai/book?src=odoo-store" target="_blank" rel="noopener noreferrer"
+               style="display:inline-block;padding:12px 28px;background:#0F766E;color:#ffffff;border-radius:8px;font-size:18px;font-weight:bold;text-decoration:none;">
+                Connect to Ask Ariane
+            </a>
+        </p>
+        <p class="text-center">Questions: <a href="mailto:support@askariane.ai">support@askariane.ai</a></p>
+    </div>
+</section>

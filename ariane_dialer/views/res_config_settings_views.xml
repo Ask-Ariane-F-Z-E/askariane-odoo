@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_dialer" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.dialer</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='sale_management']" position="inside">
+                <block title="Dialler" name="ariane_dialer_block" groups="base.group_system">
+                    <setting string="Dialler service" help="Where calls and the live coach are served. Leave empty to run the panel in preview mode.">
+                        <field name="ariane_dialer_api_url" placeholder="https://..."/>
+                        <field name="ariane_dialer_tenant_id" placeholder="tenant id"/>
+                        <field name="ariane_dialer_signing_key" password="True"/><!-- pragma: allowlist secret -->
+                        <!-- Shown until the service is set up (URL, tenant id and key). The link carries no
+                             database id, user or other data: only the fixed source tag. -->
+                        <div name="ariane_dialer_connect" class="mt8"
+                             invisible="ariane_dialer_api_url and ariane_dialer_tenant_id and ariane_dialer_signing_key">
+                            <div class="text-muted">No dialler service yet. Live calling and the AI coach
+                                need an Ask Ariane account, with your own Twilio account.</div>
+                            <a href="https://askariane.ai/book?src=odoo-store" target="_blank"
+                               rel="noopener noreferrer" class="btn btn-link ps-0">
+                                <i class="oi oi-arrow-right"/> Connect to Ask Ariane
+                            </a>
+                        </div>
+                    </setting>
+                    <setting string="Sentinel prices" help="Unit prices that mean 'do not quote'. The panel shows 'check price' instead.">
+                        <field name="ariane_dialer_price_block_values" placeholder="e.g. 1000000"/>
+                    </setting>
+                    <setting string="Filler lines" help="Shown to the rep while the coach is thinking. One per line or separated by |. Lines with a number or a currency sign are dropped.">
+                        <field name="ariane_dialer_filler_phrases" placeholder="Give me a moment to check that for you. | Let me pull up those details."/>
+                    </setting>
+                    <setting string="Selling in the customer's state" help="Top sellers to shops in the customer's delivery state, ranked by how many customers bought them.">
+                        <div class="content-group">
+                            <div class="row mt8">
+                                <label for="ariane_dialer_hot_days" class="col-lg-5 o_light_label"/>
+                                <field name="ariane_dialer_hot_days"/>
+                            </div>
+                            <div class="row">
+                                <label for="ariane_dialer_hot_count" class="col-lg-5 o_light_label"/>
+                                <field name="ariane_dialer_hot_count"/>
+                            </div>
+                            <div class="row">
+                                <label for="ariane_dialer_hot_min_orders" class="col-lg-5 o_light_label"/>
+                                <field name="ariane_dialer_hot_min_orders"/>
+                            </div>
+                            <button name="action_dialer_refresh_lists" type="object" string="Refresh coach lists"
+                                    class="btn-link" icon="oi-arrow-right"/>
+                        </div>
+                    </setting>
+                    <setting string="Data retention" help="A daily job in this Odoo removes old transcripts and call-health timelines. Calls, outcomes, notes and summaries stay. 0 = keep forever.">
+                        <div class="content-group">
+                            <div class="row mt8">
+                                <label for="ariane_dialer_transcript_retention_days" class="col-lg-5 o_light_label"/>
+                                <field name="ariane_dialer_transcript_retention_days"/>
+                            </div>
+                            <div class="row">
+                                <label for="ariane_dialer_health_retention_days" class="col-lg-5 o_light_label"/>
+                                <field name="ariane_dialer_health_retention_days"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
