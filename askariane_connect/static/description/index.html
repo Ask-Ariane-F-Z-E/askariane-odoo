@@ -1,0 +1,106 @@
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="text-center">
+            <img src="icon.png" alt="Ask Ariane OS" style="width:96px;height:96px;border-radius:16px;"/>
+            <h2 class="oe_slogan" style="color:#0F766E;">Ask Ariane OS</h2>
+            <h3 class="oe_slogan">Connect your Odoo to Ask Ariane for a free business diagnostic.</h3>
+            <p class="lead">
+                An administrator ticks the companies Ask Ariane may read, signs in on askariane.ai and
+                confirms inside Odoo. Then your Odoo sends a small daily snapshot of counts for those
+                companies only. No names, no free text, no customer records.
+            </p>
+            <p style="font-size:16px;">
+                <b>This app is free.</b> It works on Odoo.sh and self-hosted Odoo 18.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="text-center">How it connects</h3>
+        <ol>
+            <li>Open <b>Ask Ariane &gt; Connection</b> (Settings administrators only), tick 1 to 10 companies
+                and click <b>Connect</b>.</li>
+            <li>Your Odoo makes a new key pair. The private key stays in your Odoo. Ask Ariane only ever
+                receives the public key.</li>
+            <li>You sign in on askariane.ai and approve. You come back to Odoo.</li>
+            <li>Odoo shows the Ask Ariane account the data will go to, the companies and the fields.
+                Nothing is stored or sent until the administrator who started the connection clicks
+                <b>Confirm</b>.</li>
+        </ol>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="text-center">Every field that leaves your Odoo</h3>
+        <h4>When you click Connect (in the address your browser opens on askariane.ai)</h4>
+        <ul>
+            <li><b>origin</b>: your Odoo's web address (scheme and host, from web.base.url)</li>
+            <li><b>db_uuid</b>: your database's id (database.uuid)</li>
+            <li><b>company</b>: the name of your current company (as a label, up to 120 characters)</li>
+            <li><b>company_ids</b>: the ids of the companies you ticked</li>
+            <li><b>state</b> and <b>challenge</b>: one-time random values that secure the sign-in</li>
+        </ul>
+        <h4>When you come back from askariane.ai (server to server)</h4>
+        <ul>
+            <li>the one-time code, the PKCE verifier, the new <b>public key</b> and the <b>origin</b></li>
+        </ul>
+        <h4>When you click Confirm</h4>
+        <ul>
+            <li>the enrolment id Ask Ariane gave in the step before, signed with your new key</li>
+        </ul>
+        <h4>Once a day: the snapshot (schema snapshot.v1)</h4>
+        <ul>
+            <li><b>schema</b>: always "snapshot.v1"</li>
+            <li><b>odoo_version</b>: for example "18.0"</li>
+            <li><b>modules</b>: the technical names of installed modules (up to 400)</li>
+            <li><b>companies</b>: for each approved company only (1 to 10):
+                <ul>
+                    <li><b>odoo_company_id</b>: the company's id (not its name)</li>
+                    <li><b>customers</b>: number of contacts of that company marked as customers</li>
+                    <li><b>products</b>: number of products of that company</li>
+                    <li><b>users</b>: number of active internal users with access to that company</li>
+                    <li><b>open_quotations</b>: number of quotations in draft or sent</li>
+                    <li><b>open_invoices</b>: number of posted customer invoices not fully paid</li>
+                    <li><b>monthly_sales</b>: for this month and the 11 before it, the month (YYYY-MM)
+                        and the untaxed total of posted customer invoices</li>
+                </ul>
+            </li>
+        </ul>
+        <p>
+            Each count reads only records that belong to that company. Records shared between companies
+            (with no company set) are not counted. Without the Sales or Invoicing apps, those counts are 0.
+            No company names, contact names, emails, addresses, product names or any other text are sent.
+        </p>
+        <h4>Key upkeep</h4>
+        <ul>
+            <li>The key lasts 90 days. With fewer than 30 days left, the daily job sends a new
+                <b>public key</b> and a proof made with it, signed with the current key.</li>
+            <li>Every signed request carries the key id, a key generation number, your pinned Odoo web
+                address, a timestamp, a random nonce and the signature.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="text-center">Your control</h3>
+        <ul>
+            <li><b>Disconnect</b> from Ask Ariane &gt; Connection. Odoo tells Ask Ariane, then deletes the
+                key from your Odoo whatever the answer. You can also disconnect from your account on
+                askariane.ai, without your Odoo.</li>
+            <li><b>Delete my data</b>: the Ask Ariane account owner can delete the snapshots, the connection
+                and the account's data from askariane.ai.</li>
+            <li><b>Staging copies go quiet</b>: when Odoo.sh makes a staging or dev copy, the key and any
+                pending connection are wiped (Odoo neutralize). If your Odoo's web address changes, nothing
+                is sent until it is restored or you connect again.</li>
+            <li>Only Settings administrators can connect or disconnect, and only the administrator who
+                started a connection can finish it.</li>
+        </ul>
+        <p class="text-center">
+            Questions: <a href="mailto:support@askariane.ai">support@askariane.ai</a>
+        </p>
+    </div>
+</section>

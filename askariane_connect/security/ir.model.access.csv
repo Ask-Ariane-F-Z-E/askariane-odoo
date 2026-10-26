@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_askariane_connect_enrolment_system,askariane connect enrolment system,model_askariane_connect_enrolment,base.group_system,1,1,1,1
+access_askariane_connect_panel_system,askariane connect panel system,model_askariane_connect_panel,base.group_system,1,1,1,1

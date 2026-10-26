@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Runs inside this Odoo. Does nothing until connected. models/connect_service.py says what is sent. -->
+    <record id="cron_push_snapshot" model="ir.cron">
+        <field name="name">Ask Ariane: daily snapshot and key rotation</field>
+        <field name="model_id" ref="model_askariane_connect"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_push_snapshot()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>
