@@ -11,6 +11,11 @@ an Ed25519 key made inside Odoo, final confirmation inside Odoo).
   company (shared) are not counted. Sales and invoice counts are 0 when those
   apps are not installed. The store page (`static/description/index.html`) lists
   every field sent.
+- **Where the key lives**: the private connection key is stored in Odoo system
+  parameters (`askariane_connect.private_key`), so it is visible to Odoo
+  administrators (Settings access). Disconnecting wipes it.
+- **Address**: `web.base.url` must be `https://<host>` on the standard port;
+  an international host name is sent in punycode, another port is refused.
 - **Origin pin**: nothing is signed or sent when `web.base.url` no longer matches
   the address pinned at connect.
 - **Key rotation**: the cron rotates the key when fewer than 30 days remain.

@@ -128,6 +128,18 @@ class TestCallbackHttp(ConnectMixin, HttpCase):
         page = self.url_open(f'/askariane/connect/confirm/{enrolment.id}')
         self.assertIn('code_invalid', page.text)
 
+    def test_refusal_page_explains_the_new_codes(self):
+        for code in ('connection_limit', 'reconnect_requires_operator'):
+            enrolment, query = self.start(self.admin1)
+            self.authenticate('aac_admin1', 'aac_admin1')
+            with recorded({'exchange': [(409, {'error': code})]}):
+                self._callback(query['state'])
+            self.assertEqual(self._status(enrolment), 'failed')
+            page = self.url_open(f'/askariane/connect/confirm/{enrolment.id}').text
+            self.assertIn(code, page)
+            self.assertIn('Ask Ariane did not complete the connection', page)
+        self.assertIn('support@askariane.ai', page)                  # the operator-only text
+
     def test_confirm_page_and_post(self):
         enrolment, query = self.start(self.admin1)
         self.authenticate('aac_admin1', 'aac_admin1')

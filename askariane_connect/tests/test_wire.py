@@ -72,11 +72,42 @@ class TestWire(TransactionCase):
     def test_origin_of(self):
         self.assertEqual(wire.origin_of('https://ERP.Example.com/odoo/path?x=1'), 'https://erp.example.com')
         self.assertEqual(wire.origin_of('https://erp.example.com:443/'), 'https://erp.example.com')
-        self.assertEqual(wire.origin_of('https://erp.example.com:8443'), 'https://erp.example.com:8443')
+        # Ask Ariane accepts only https://<host> with the default port (ADR-0046
+        # §3.3), so another port is refused here, before anything is sent.
+        self.assertIsNone(wire.origin_of('https://erp.example.com:8443'))
+        self.assertIsNone(wire.origin_of('https://[2001:db8::1]/'))
         self.assertIsNone(wire.origin_of('http://erp.example.com'))
         self.assertIsNone(wire.origin_of('https://user:pw@erp.example.com'))
         self.assertIsNone(wire.origin_of(''))
         self.assertIsNone(wire.origin_of(False))
+
+    def test_idn_host_becomes_punycode(self):
+        self.assertEqual(wire.origin_of('https://Bücher.Example/odoo'), 'https://xn--bcher-kva.example')
+        self.assertEqual(wire.origin_of('https://xn--bcher-kva.example'), 'https://xn--bcher-kva.example')
+        # positive control: a plain ASCII host is unchanged
+        self.assertEqual(wire.origin_of('https://erp.example.com'), 'https://erp.example.com')
+
+    def test_origin_problem_names_the_port(self):
+        self.assertIn('port', wire.origin_problem('https://erp.example.com:8443'))
+        self.assertIn('https', wire.origin_problem('http://erp.example.com'))
+        self.assertIsNone(wire.origin_problem('https://erp.example.com:443'))     # positive control
+
+    def test_new_refusal_codes_are_known_and_explained(self):
+        for code in ('connection_limit', 'reconnect_requires_operator'):
+            self.assertEqual(wire.error_code({'error': code}), code)
+            text = wire.error_text(code)
+            self.assertIn(code, text)
+            self.assertGreater(len(text), len(code) + 20)          # a sentence, not just the code
+        self.assertIn('support@askariane.ai', wire.error_text('reconnect_requires_operator'))
+        self.assertIn('Disconnect', wire.error_text('connection_limit'))
+        # an unknown code still reads as unavailable
+        self.assertEqual(wire.error_text(wire.error_code({'error': '<b>x</b>'})).count('<'), 0)
+
+    def test_store_description_says_where_the_key_lives(self):
+        from odoo.modules.module import get_manifest
+        description = ' '.join(get_manifest('askariane_connect')['description'].split())
+        self.assertIn('stored in this Odoo\'s system parameters', description)
+        self.assertIn('Odoo administrators', description)
 
     def test_unknown_error_codes_read_as_unavailable(self):
         self.assertEqual(wire.error_code({'error': 'replay'}), 'replay')

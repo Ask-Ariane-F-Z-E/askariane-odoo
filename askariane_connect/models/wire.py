@@ -36,7 +36,23 @@ ERROR_CODES = frozenset((
     'unknown_key', 'stale_timestamp', 'replay', 'generation_mismatch', 'origin_mismatch',
     'key_expired', 'connection_inactive', 'schema_invalid', 'company_not_approved',
     'rate_limited', 'code_invalid', 'verifier_mismatch', 'enrolment_invalid', 'unavailable',
+    'connection_limit', 'reconnect_requires_operator',
 ))
+
+# Plain words for the codes a person can act on. Every other code is shown as
+# a generic sentence. The code itself is always shown too, for support.
+ERROR_TEXT = {
+    'connection_limit': 'This Ask Ariane account already has the most connections it may have. '
+                        'Disconnect another Odoo from askariane.ai first, then try again.',
+    'reconnect_requires_operator': 'This Ask Ariane account is already linked to a business. '
+                                   'Connecting it again is done by the Ask Ariane team: write to '
+                                   'support@askariane.ai and we will reconnect it for you.',
+    'rate_limited': 'Too many attempts. Wait a few minutes and try again.',
+    'code_invalid': 'The sign-in step expired or was already used. Start again.',
+    'enrolment_invalid': 'This connection attempt is no longer valid. Start again.',
+}
+DEFAULT_ERROR_TEXT = 'Ask Ariane could not complete the connection.'
+ORIGIN_HOST_RE = re.compile(r'^[a-z0-9.-]{1,253}$')
 
 
 def connect_page():
@@ -92,25 +108,44 @@ def sign(private_b64u, message):
     return b64u(load_private_key(private_b64u).sign(message))
 
 
-def origin_of(url):
-    """scheme://host[:port] of a URL, lower case, no path and no trailing slash.
-    Only https counts: anything else, or a URL with a user name or password in
-    it, gives None."""
+def _origin(url):
+    """(origin, problem): exactly one is None. The origin is https://<host>,
+    lower case, the host in punycode (an international name such as bücher.de
+    becomes xn--bcher-kva.de), no port, path or trailing slash. That is the
+    only form Ask Ariane accepts (ADR-0046 §3.3), so anything else is refused
+    here, with a reason, before anything is sent."""
     if not url:
-        return None
+        return None, 'The Odoo address (web.base.url) is not set.'
     try:
         parts = urlsplit(url.strip())
         port = parts.port
     except ValueError:
-        return None
-    if parts.scheme.lower() != 'https' or not parts.hostname or parts.username or parts.password:
-        return None
-    host = parts.hostname.lower()
-    if ':' in host:
-        host = f'[{host}]'
+        return None, 'The Odoo address (web.base.url) is not a valid address.'
+    if parts.scheme.lower() != 'https' or not parts.hostname:
+        return None, 'The Odoo address (web.base.url) must be an https address.'
+    if parts.username or parts.password:
+        return None, 'The Odoo address (web.base.url) must not contain a user name or password.'
     if port and port != 443:
-        return f'https://{host}:{port}'
-    return f'https://{host}'
+        return None, (f'The Odoo address (web.base.url) uses port {port}. Ask Ariane connects only '
+                      'to the standard https port (443). Serve Odoo on https without a port number, '
+                      'then try again.')
+    try:
+        host = parts.hostname.encode('idna').decode('ascii').lower()
+    except UnicodeError:
+        return None, 'The Odoo address (web.base.url) has a host name that cannot be used.'
+    if not ORIGIN_HOST_RE.match(host):
+        return None, 'The Odoo address (web.base.url) must be a host name, not an IP address.'
+    return f'https://{host}', None
+
+
+def origin_of(url):
+    """The origin Ask Ariane will pin, or None (see _origin)."""
+    return _origin(url)[0]
+
+
+def origin_problem(url):
+    """Why origin_of(url) is None, in plain words; None when it is fine."""
+    return _origin(url)[1]
 
 
 def canonical_body(obj):
@@ -161,6 +196,14 @@ def _read(response):
 def error_code(data):
     code = data.get('error') if isinstance(data, dict) else None
     return code if code in ERROR_CODES else 'unavailable'
+
+
+def error_text(code):
+    """A sentence for a stored error code, with the code in brackets. Only
+    fixed text: an unknown code reads as 'unavailable'."""
+    if code not in ERROR_CODES and code not in ('origin_changed', 'bad_response'):
+        code = 'unavailable'
+    return f'{ERROR_TEXT.get(code, DEFAULT_ERROR_TEXT)} ({code})'
 
 
 def post_exchange(obj):

@@ -104,7 +104,8 @@ class AskArianeConnectEnrolment(models.Model):
             raise AccessError('You can only connect companies you have access to.')
         origin = service._current_origin()
         if not origin:
-            raise UserError('The Odoo address (web.base.url) must be an https address.')
+            raise UserError(wire.origin_problem(service._icp().get_param('web.base.url'))
+                            or 'The Odoo address (web.base.url) must be an https address.')
         db_uuid = self.env['ir.config_parameter'].sudo().get_param('database.uuid') or ''
         state = secrets.token_urlsafe(16)
         verifier = secrets.token_urlsafe(32)

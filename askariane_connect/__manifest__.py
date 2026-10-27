@@ -10,6 +10,8 @@ products, users, open quotations, open invoices, monthly sales totals) for
 the approved companies only. No names, no free text, no customer records.
 
 The key is made inside your Odoo; Ask Ariane holds only the public half.
+The private connection key is stored in this Odoo's system parameters, so
+Odoo administrators (Settings access) can see it.
 Disconnect at any time, from Odoo or from askariane.ai.
 """,
     'author': 'Ask Ariane',

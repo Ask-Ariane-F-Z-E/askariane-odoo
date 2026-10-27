@@ -86,6 +86,20 @@ class TestConnectStart(ConnectMixin, TransactionCase):
         with self.assertRaises(UserError):
             self.env['askariane.connect.enrolment'].with_user(self.admin1)._start(self.env['res.company'])
 
+    def test_connect_refuses_a_non_default_port_with_a_clear_message(self):
+        Enrolment = self.env['askariane.connect.enrolment'].sudo()
+        before = Enrolment.search_count([])
+        self.env['ir.config_parameter'].sudo().set_param('web.base.url', 'https://erp.example.com:8443')
+        with self.assertRaises(UserError) as caught:
+            self.start(self.admin1)
+        self.assertIn('port', str(caught.exception))
+        self.assertIn('8443', str(caught.exception))
+        self.assertEqual(Enrolment.search_count([]), before)          # nothing created
+        # positive control: the default port connects
+        self.env['ir.config_parameter'].sudo().set_param('web.base.url', 'https://erp.example.com:443')
+        enrolment, _query = self.start(self.admin1)
+        self.assertEqual(enrolment.origin, 'https://erp.example.com')
+
 
 @tagged('post_install', '-at_install')
 class TestConfirm(ConnectMixin, TransactionCase):

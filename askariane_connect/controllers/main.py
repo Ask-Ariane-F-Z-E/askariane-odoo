@@ -17,6 +17,7 @@ from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from markupsafe import escape
 
+from ..models import wire
 from ..models.connect_service import check_system
 
 _logger = logging.getLogger(__name__)
@@ -94,7 +95,8 @@ class AskArianeConnectController(http.Controller):
             return _redirect(PANEL_URL)
         if record.status == 'failed':
             return _page(200, 'Not connected',
-                         f'Ask Ariane did not complete the connection ({record.error or "unavailable"}). '
+                         'Ask Ariane did not complete the connection. '
+                         f'{wire.error_text(record.error or "unavailable")} '
                          'Nothing was stored. Start again from Ask Ariane > Connection.')
         if record.status != 'exchanged' or values['expired']:
             return _page(200, 'Not connected', 'This connection attempt has expired. Start again.')
