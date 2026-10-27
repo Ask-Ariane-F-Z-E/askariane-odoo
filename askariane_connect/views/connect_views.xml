@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_connect_panel_form" model="ir.ui.view">
+        <field name="name">askariane.connect.panel.form</field>
+        <field name="model">askariane.connect.panel</field>
+        <field name="arch" type="xml">
+            <form string="Ask Ariane connection" create="false" delete="false">
+                <header>
+                    <button name="action_connect" type="object" string="Connect" class="btn-primary"
+                            invisible="connected"/>
+                    <button name="action_disconnect" type="object" string="Disconnect"
+                            invisible="not connected"
+                            confirm="Disconnect this Odoo from Ask Ariane? The key is deleted here whatever Ask Ariane answers."/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Ask Ariane</h1>
+                    </div>
+                    <div class="alert alert-info" role="status" invisible="connected">
+                        Not connected. Tick the companies Ask Ariane may read, then click Connect.
+                        You sign in on askariane.ai and confirm here before anything is sent.
+                    </div>
+                    <div class="alert alert-success" role="status" invisible="not connected">
+                        Connected. A daily snapshot of counts is sent for the approved companies only.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not origin_mismatch">
+                        This Odoo's address (web.base.url) is not the address pinned at connect, so nothing
+                        is being sent. Restore the address, or disconnect and connect again.
+                    </div>
+                    <group invisible="connected">
+                        <field name="company_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
+                    <group invisible="not connected">
+                        <field name="connected" invisible="1"/>
+                        <field name="origin_mismatch" invisible="1"/>
+                        <field name="tenant_id"/>
+                        <field name="account_email"/>
+                        <field name="approved_company_names"/>
+                        <field name="pinned_origin"/>
+                        <field name="key_expires_at"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_connect_panel" model="ir.actions.act_window">
+        <field name="name">Ask Ariane connection</field>
+        <field name="res_model">askariane.connect.panel</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+    </record>
+
+    <menuitem id="menu_askariane_root" name="Ask Ariane" sequence="90"
+              web_icon="askariane_connect,static/description/icon.png"
+              groups="base.group_system"/>
+    <menuitem id="menu_askariane_connection" name="Connection" parent="menu_askariane_root"
+              action="action_connect_panel" sequence="10" groups="base.group_system"/>
+</odoo>

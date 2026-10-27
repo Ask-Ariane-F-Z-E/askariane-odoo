@@ -18,13 +18,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Byte-compile the addon
-        run: python -m compileall -q ariane_dialer
+      - name: Byte-compile the addons
+        run: python -m compileall -q ariane_dialer askariane_connect
 
       - name: Ruff (syntax and undefined names only)
         run: |
           pip install ruff==0.6.9
-          ruff check --select E9,F63,F7,F82 ariane_dialer
+          ruff check --select E9,F63,F7,F82 ariane_dialer askariane_connect
 
       - uses: actions/setup-node@v4
         with:

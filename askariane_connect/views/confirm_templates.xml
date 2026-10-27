@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The final confirmation inside Odoo (ADR-0046 §3 step 6). Self-contained:
+         no third-party script or style, every value escaped by QWeb. -->
+    <template id="confirm_page" name="Ask Ariane: confirm the connection">
+        &lt;!DOCTYPE html&gt;
+        <html lang="en">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="referrer" content="no-referrer"/>
+                <title>Confirm the Ask Ariane connection</title>
+            </head>
+            <body style="font-family:sans-serif;max-width:680px;margin:40px auto;padding:0 16px;line-height:1.5;">
+                <h2>Confirm the Ask Ariane connection</h2>
+                <p style="font-size:18px;">
+                    Data will go to the Ask Ariane account
+                    <b id="account_email" t-esc="account_email"/>,
+                    for companies
+                    <b id="companies" t-esc="', '.join(companies.mapped('name'))"/>,
+                    fields <b id="fields" t-esc="', '.join(fields)"/>.
+                    Confirm?
+                </p>
+                <p t-if="tenant_display_name">Ask Ariane account name: <b t-esc="tenant_display_name"/></p>
+                <p>This Odoo: <b t-esc="origin"/></p>
+                <p t-if="scope">Scope granted on askariane.ai: <b t-esc="', '.join(scope)"/></p>
+                <p style="color:#9a3412;">
+                    If this is not your Ask Ariane account, click Cancel. Nothing is stored or sent until you confirm.
+                </p>
+                <form method="post" t-attf-action="/askariane/connect/confirm/#{enrolment.id}/decide">
+                    <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+                    <button type="submit" name="decision" value="confirm"
+                            style="padding:10px 24px;background:#0F766E;color:#fff;border:0;border-radius:6px;font-size:16px;">
+                        Confirm
+                    </button>
+                    <button type="submit" name="decision" value="cancel"
+                            style="padding:10px 24px;margin-left:12px;border-radius:6px;font-size:16px;">
+                        Cancel
+                    </button>
+                </form>
+            </body>
+        </html>
+    </template>
+</odoo>
